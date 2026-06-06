@@ -1,4 +1,4 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -29,7 +29,9 @@ export function formatRelativeTime(date: Date | string): string {
   return formatDate(date);
 }
 
-export function scoreToLabel(score: number): "excellent" | "good" | "needs-work" | "poor" {
+export function scoreToLabel(
+  score: number
+): "excellent" | "good" | "needs-work" | "poor" {
   if (score >= 80) return "excellent";
   if (score >= 60) return "good";
   if (score >= 40) return "needs-work";

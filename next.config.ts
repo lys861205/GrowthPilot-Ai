@@ -1,12 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "2mb",
-    },
-  },
-  serverExternalPackages: ["pg", "ioredis"],
+  output: "standalone",
+  serverExternalPackages: [
+    "pg",
+    "ioredis",
+    "kysely",
+    "@better-auth/kysely-adapter",
+    "better-auth",
+    "@react-pdf/renderer",
+  ],
 };
 
 export default nextConfig;

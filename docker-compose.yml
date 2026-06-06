@@ -1,6 +1,7 @@
 services:
+  # ── PostgreSQL ────────────────────────────────────────────────────────────────
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15
     container_name: growthpilot_db
     environment:
       POSTGRES_DB: growthpilot
@@ -16,8 +17,9 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Redis ─────────────────────────────────────────────────────────────────────
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine
     container_name: growthpilot_redis
     ports:
       - "6379:6379"
@@ -28,6 +30,65 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  # ── Next.js App ───────────────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: growthpilot_app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/growthpilot
+      REDIS_URL: redis://redis:6379
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Audit Worker ──────────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: growthpilot_worker
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/growthpilot
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Blog Agent Worker ─────────────────────────────────────────────────────────
+  worker-blog:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: growthpilot_worker_blog
+    command: ["tsx", "src/workers/blog-agent-worker.ts"]
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/growthpilot
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
