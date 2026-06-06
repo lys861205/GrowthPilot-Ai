@@ -13,18 +13,7 @@ RUN npm run build
 
 FROM node:22-bookworm-slim AS runner
 
-RUN apt-get update && apt-get install -y \
-    postgresql-15 \
-    redis-server \
-    supervisor \
-    postgresql-client-15 \
-    && rm -rf /var/lib/apt/lists/*
-
-USER postgres
-RUN /usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/data \
-    && echo "host all all 127.0.0.1/32 trust" >> /var/lib/postgresql/data/pg_hba.conf \
-    && echo "listen_addresses='localhost'" >> /var/lib/postgresql/data/postgresql.conf
-USER root
+RUN apt-get update && apt-get install -y supervisor && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /var/log/supervisor
 
@@ -45,8 +34,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=postgresql://postgres@localhost:5432/growthpilot
-ENV REDIS_URL=redis://localhost:6379
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
