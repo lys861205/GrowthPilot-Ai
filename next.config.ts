@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
     "better-auth",
     "@react-pdf/renderer",
   ],
+  experimental: {
+    turbo: {
+      resolveAlias: {},
+    },
+  },
 };
 
 export default nextConfig;
