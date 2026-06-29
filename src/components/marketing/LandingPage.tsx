@@ -634,8 +634,8 @@ function Footer() {
             <div>
               <p className="mb-3 font-semibold text-slate-700">Legal</p>
               <ul className="space-y-2 text-slate-500">
-                <li><a href="#" className="hover:text-slate-700">Privacy</a></li>
-                <li><a href="#" className="hover:text-slate-700">Terms</a></li>
+                <li><Link href="/privacy" className="hover:text-slate-700">Privacy</Link></li>
+                <li><Link href="/terms" className="hover:text-slate-700">Terms</Link></li>
               </ul>
             </div>
           </div>
