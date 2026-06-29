@@ -90,7 +90,7 @@ export async function injectDemoDataAction() {
       issues: [
         {
           type: "meta_length",
-          severity: "medium",
+          severity: "medium" as const,
           message: "Meta description is too short (< 120 chars)",
           detail: "Current: 22 chars. Recommended: 120-160 chars.",
         },
@@ -105,9 +105,9 @@ export async function injectDemoDataAction() {
       wordCount: 120,
       score: 28,
       issues: [
-        { type: "missing_title", severity: "high", message: "Page is missing a title tag" },
-        { type: "missing_h1", severity: "high", message: "Page has no H1 heading" },
-        { type: "missing_meta", severity: "medium", message: "Page is missing a meta description" },
+        { type: "missing_title", severity: "high" as const, message: "Page is missing a title tag" },
+        { type: "missing_h1", severity: "high" as const, message: "Page has no H1 heading" },
+        { type: "missing_meta", severity: "medium" as const, message: "Page is missing a meta description" },
       ],
     },
   ];
