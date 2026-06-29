@@ -1,10 +1,12 @@
 # Deployment Guide
 
+GrowthPilot AI is designed to be deployed as a unified Docker container using `supervisord`. This ensures that the Next.js web application and all background workers (Audit, Blog Agent, Google Search Console Sync) run together seamlessly.
+
 ## Prerequisites
 
-- Node.js 20+
-- Docker & Docker Compose (for local infra)
+- Docker & Docker Compose
 - A Qwen API key (or OpenAI-compatible endpoint)
+- Google Cloud Console Project (for GSC OAuth Integration)
 
 ---
 
@@ -48,164 +50,80 @@ QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
 QWEN_MODEL=qwen-plus
 
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Google Search Console OAuth
+GOOGLE_CLIENT_ID=<your-google-oauth-client-id>
+GOOGLE_CLIENT_SECRET=<your-google-oauth-client-secret>
 ```
 
-### 4. Run database migrations
+### 4. Sync Database Schema
+
+Instead of creating migration files during rapid prototyping, you can directly push the schema to your local database:
 
 ```bash
 npm run db:push
 ```
 
-Or generate + migrate:
-
-```bash
-npm run db:generate
-npm run db:migrate
-```
-
-### 5. (Optional) Seed demo data
-
-```bash
-npm run db:seed
-```
-
-### 6. Start the Next.js dev server
+### 5. Start the Next.js dev server
 
 ```bash
 npm run dev
 ```
 
-### 7. Start the BullMQ worker (separate terminal)
+### 6. Start the Background Workers
+
+GrowthPilot AI relies on background workers for data processing and automated AI tasks. You can run them in separate terminals:
 
 ```bash
-npm run worker
-```
-
-The worker processes audit jobs from Redis. Both the web server and worker must be running for audits to complete.
-
----
-
-## Production: Railway
-
-Railway can run both the web server and the worker as separate services sharing the same environment.
-
-### Step 1 — Create a Railway project
-
-```bash
-npm install -g @railway/cli
-railway login
-railway init
-```
-
-### Step 2 — Add PostgreSQL and Redis plugins
-
-In the Railway dashboard, add:
-- **PostgreSQL** plugin → copies `DATABASE_URL` into env
-- **Redis** plugin → copies `REDIS_URL` into env
-
-### Step 3 — Set environment variables
-
-In Railway → Variables, add:
-
-```
-BETTER_AUTH_SECRET=<32+ char secret>
-BETTER_AUTH_URL=https://<your-railway-domain>
-QWEN_API_KEY=<your key>
-QWEN_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-QWEN_MODEL=qwen-plus
-NEXT_PUBLIC_APP_URL=https://<your-railway-domain>
-```
-
-### Step 4 — Deploy the web service
-
-```bash
-railway up
-```
-
-Add a start command in `railway.toml`:
-
-```toml
-[deploy]
-startCommand = "npm run db:migrate && npm start"
-```
-
-### Step 5 — Deploy the worker as a separate service
-
-In the Railway dashboard:
-1. Add a new service from the same repo
-2. Set the start command to: `node -r ts-node/register src/workers/audit-worker.ts`
-   or if compiled: `node dist/workers/audit-worker.js`
-
-For production worker, add a build step or use `tsx`:
-
-```bash
-npx tsx src/workers/audit-worker.ts
+npm run worker:audit  # Runs SEO Audits
+npm run worker:blog   # Runs Autonomous Blog Generation
+npm run worker:gsc    # Syncs Google Search Console data daily
 ```
 
 ---
 
-## Production: Vercel + External Worker
+## Production: Docker (Recommended)
 
-Vercel hosts the Next.js app; the BullMQ worker runs on any Node.js server (Railway, Fly.io, VPS).
+GrowthPilot AI uses a unified Dockerfile that builds the Next.js application and packages it alongside `supervisord`. Supervisor manages both the Next.js production server and all background worker processes simultaneously within a single container.
 
-### Step 1 — Deploy Next.js to Vercel
+### Step 1 — Prepare your Environment
 
-```bash
-npx vercel --prod
-```
+You will need a Postgres database and a Redis instance (e.g., provided by Supabase, Upstash, or Railway plugins).
 
-Set all environment variables in the Vercel dashboard.
+### Step 2 — Deploy using Docker (e.g., Railway, Render, Fly.io)
 
-### Step 2 — Run the worker externally
+Most modern PaaS providers natively support Dockerfile deployments.
 
-On a Railway/Fly.io instance or VPS:
+When you deploy the repository, the platform will automatically build the image using the provided `Dockerfile`.
 
-```bash
-# Clone the repo
-git clone <your-repo>
-cd growthpilot
+The Docker container uses a custom entrypoint (`docker-entrypoint.sh`) which automatically runs:
+1. `npx drizzle-kit push --force` (To ensure production database schema is up-to-date)
+2. `supervisord` (To launch Next.js and all background workers)
 
-# Install deps
-npm install --legacy-peer-deps --omit=dev
+### Step 3 — Set Environment Variables
 
-# Set env vars (DATABASE_URL, REDIS_URL, QWEN_API_KEY, etc.)
+In your deployment dashboard, provide the following variables:
 
-# Run worker
-npx tsx src/workers/audit-worker.ts
-```
+- `DATABASE_URL`
+- `REDIS_URL`
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL` (e.g., `https://your-production-domain.com`)
+- `QWEN_API_KEY`, `QWEN_BASE_URL`, `QWEN_MODEL`
+- `NEXT_PUBLIC_APP_URL` (e.g., `https://your-production-domain.com`)
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
 
-> The worker and the web app must share the same `REDIS_URL` and `DATABASE_URL`.
+**Crucial Note for Google OAuth**: Ensure that you add `https://your-production-domain.com/api/integrations/google/callback` to the **Authorized redirect URIs** in your Google Cloud Console.
 
----
+### Step 4 — Verify Processes
 
-## Environment Variables Reference
+Once deployed, Supervisor will automatically run and log:
+- `program:app` (Next.js Node Server)
+- `program:worker-audit` (SEO Crawler Worker)
+- `program:worker-blog` (Blog Generation Worker)
+- `program:worker-gsc` (GSC Daily Metrics Sync)
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `REDIS_URL` | ✅ | Redis connection string |
-| `BETTER_AUTH_SECRET` | ✅ | Random secret for session signing |
-| `BETTER_AUTH_URL` | ✅ | Full URL of the app (used for auth callbacks) |
-| `QWEN_API_KEY` | ✅ | API key for Qwen / OpenAI-compatible LLM |
-| `QWEN_BASE_URL` | ✅ | LLM API base URL |
-| `QWEN_MODEL` | ✅ | Model name (e.g. `qwen-plus`) |
-| `NEXT_PUBLIC_APP_URL` | ✅ | Public URL of the app (used in client code) |
-
----
-
-## Database Migrations in Production
-
-Run migrations before starting the server:
-
-```bash
-npm run db:migrate
-```
-
-Or automate it in your start command:
-
-```bash
-npm run db:migrate && npm start
-```
+Logs for background workers can be found inside the container at `/var/log/supervisor/`.
 
 ---
 
@@ -215,24 +133,22 @@ npm run db:migrate && npm start
 Browser
   │
   ▼
-Next.js App (Vercel / Railway)
+Next.js App (Supervisord Managed)
   ├── App Router pages (SSR + Server Actions)
   ├── API routes (/api/*)
-  │     └── SSE stream route (/api/audits/[id]/stream)
-  └── Auth (better-auth)
-        └── Session cookies
+  ├── Auth (better-auth)
+  └── Google OAuth Integration
+        └── /api/integrations/google/*
 
-PostgreSQL (Railway / Supabase)
-  └── Drizzle ORM
+PostgreSQL
+  └── Drizzle ORM (Synced via docker-entrypoint.sh)
 
-Redis (Railway / Upstash)
-  ├── BullMQ job queue  ←── Audit jobs enqueued here
-  └── SSE event buffer  ←── Worker pushes progress events here
+Redis
+  ├── BullMQ job queue  ←── Background jobs enqueued here
+  └── SSE event buffer  ←── Real-time frontend updates
 
-BullMQ Worker (Railway / VPS)
-  ├── Crawls site (Cheerio)
-  ├── Scores pages (SEO checks)
-  ├── Generates suggestions (Qwen AI)
-  ├── Generates growth recs (Qwen AI)
-  └── Saves memory + updates audit status
+BullMQ Workers (Supervisord Managed)
+  ├── worker-audit: Crawls site and scores SEO
+  ├── worker-blog: Analyzes keywords and triggers Qwen content generation
+  └── worker-gsc: Pulls daily Search Console metrics and saves to DB
 ```

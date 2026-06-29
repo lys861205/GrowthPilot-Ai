@@ -54,11 +54,11 @@ services:
     restart: unless-stopped
 
   # ── Audit Worker ──────────────────────────────────────────────────────────────
-  worker:
+  worker-audit:
     build:
       context: .
       dockerfile: Dockerfile.worker
-    container_name: growthpilot_worker
+    container_name: growthpilot_worker_audit
     env_file:
       - .env.local
     environment:

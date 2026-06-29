@@ -11,7 +11,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "worker": "tsx --env-file=.env.local src/workers/audit-worker.ts",
+    "worker:audit": "tsx --env-file=.env.local src/workers/audit-worker.ts",
     "worker:blog": "tsx --env-file=.env.local src/workers/blog-agent-worker.ts",
     "worker:gsc": "tsx --env-file=.env.local src/workers/gsc-sync-worker.ts",
     "db:seed": "tsx src/lib/db/seed.ts",

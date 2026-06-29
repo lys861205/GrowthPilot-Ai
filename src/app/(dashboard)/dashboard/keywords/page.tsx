@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TrendingUp } from "lucide-react";
 import Link from "next/link";
-
+import { SyncButton } from "./SyncButton";
 export default async function KeywordsPage() {
   const session = await requireSession();
 
@@ -163,9 +163,12 @@ async function PropertyKeywordsCard({ property }: { property: typeof gscProperti
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Keywords Performance</h1>
-        <p className="mt-1 text-slate-500">Real ranking data from Google Search Console</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Keywords Performance</h1>
+          <p className="mt-1 text-slate-500">Real ranking data from Google Search Console</p>
+        </div>
+        <SyncButton accountId={account.id} />
       </div>
 
       <div className="grid gap-6">
