@@ -4,7 +4,12 @@ import { GenerateContentForm } from "@/components/content/GenerateContentForm";
 import { FileText, ArrowRight, Clock } from "lucide-react";
 import Link from "next/link";
 
-export default async function ContentPage() {
+export default async function ContentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ keyword?: string; siteId?: string }>;
+}) {
+  const { keyword, siteId } = await searchParams;
   const session = await requireSession();
   const siteList = await getSitesByUserId(session.user.id);
 
@@ -25,7 +30,7 @@ export default async function ContentPage() {
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Generate New Post</h2>
-        <GenerateContentForm sites={siteList} />
+        <GenerateContentForm sites={siteList} defaultSiteId={siteId} defaultKeyword={keyword} />
       </section>
 
       {posts.length > 0 && (

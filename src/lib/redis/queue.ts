@@ -86,3 +86,38 @@ export function createBlogAgentWorker(
     concurrency: 2,
   });
 }
+
+// ─── GSC Sync Queue ───────────────────────────────────────────────────────────
+
+export interface GscSyncJobData {
+  accountId: string;
+}
+
+export interface GscSyncJobResult {
+  accountId: string;
+  propertiesSynced: number;
+}
+
+const GSC_SYNC_QUEUE = "gsc-sync-queue";
+
+export const gscSyncQueue = new Queue<GscSyncJobData, GscSyncJobResult>(
+  GSC_SYNC_QUEUE,
+  {
+    connection,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: "exponential", delay: 10_000 },
+      removeOnComplete: { count: 50 },
+      removeOnFail: { count: 20 },
+    },
+  }
+);
+
+export function createGscSyncWorker(
+  processor: (job: Job<GscSyncJobData, GscSyncJobResult>) => Promise<GscSyncJobResult>
+) {
+  return new Worker<GscSyncJobData, GscSyncJobResult>(GSC_SYNC_QUEUE, processor, {
+    connection,
+    concurrency: 1,
+  });
+}

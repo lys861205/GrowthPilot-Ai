@@ -11,6 +11,7 @@ import {
   Settings,
   Zap,
   BookOpen,
+  Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/auth/SignOutButton";
@@ -19,9 +20,11 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/sites", label: "Sites", icon: Globe },
   { href: "/dashboard/audit", label: "Audits", icon: Search },
+  { href: "/dashboard/keywords", label: "Keywords", icon: Key },
   { href: "/dashboard/content", label: "Content AI", icon: FileText },
   { href: "/dashboard/blog-agent", label: "Blog Agent", icon: BookOpen },
   { href: "/dashboard/growth", label: "Growth Board", icon: TrendingUp },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {

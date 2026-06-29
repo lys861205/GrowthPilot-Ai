@@ -15,6 +15,7 @@ import { ScoreTrendChart } from "@/components/memory/ScoreTrendChart";
 import { AuditCompareCard } from "@/components/memory/AuditCompareCard";
 import { AuditComparePicker } from "@/components/memory/AuditComparePicker";
 import { TrendAnalysisPanel } from "@/components/memory/TrendAnalysisPanel";
+import { CompanyInfoForm } from "@/components/sites/CompanyInfoForm";
 import { ArrowRight, BarChart2, TrendingUp, Clock } from "lucide-react";
 
 export default async function SiteDetailPage({
@@ -109,6 +110,11 @@ export default async function SiteDetailPage({
           />
         </div>
       )}
+
+      {/* Brand Assets */}
+      <section>
+        <CompanyInfoForm siteId={site.id} initialInfo={site.companyInfo} />
+      </section>
 
       {/* Score trend chart */}
       {history.length > 0 ? (

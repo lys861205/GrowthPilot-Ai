@@ -26,7 +26,7 @@ export function ScoreTrendChart({ data }: Props) {
     x: PAD.left + (data.length > 1 ? i * xStep : chartW / 2),
     y: PAD.top + chartH - ((d.score - min) / range) * chartH,
     score: d.score,
-    date: new Date(d.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    date: new Date(d.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
   }));
 
   const linePath = pts

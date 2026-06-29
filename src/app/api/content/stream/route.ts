@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { blogPosts } from "@/lib/db/schema";
+import { blogPosts, blogIdeas } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { streamBlogPost } from "@/lib/qwen/content";
 import { z } from "zod";
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   const post = await db.query.blogPosts.findFirst({
     where: eq(blogPosts.id, parsed.data.postId),
-    with: { site: { columns: { userId: true, url: true } } },
+    with: { site: { columns: { userId: true, url: true, companyInfo: true } } },
   });
 
   if (!post || post.site.userId !== session.user.id) {
@@ -37,6 +37,16 @@ export async function POST(request: NextRequest) {
   const keywords = post.keywords ?? [];
   const tone: "professional" | "conversational" | "educational" = "professional";
 
+  const idea = await db.query.blogIdeas.findFirst({
+    where: eq(blogIdeas.convertedToPostId, post.id),
+  });
+
+  const dbSections = idea?.outline?.sections ?? [];
+  const mappedSections = dbSections.map((sec: any) => ({
+    heading: sec.h2 || sec.heading || "Section",
+    keyPoints: sec.subsections ? sec.subsections.map((sub: any) => sub.h3) : sec.keyPoints || [],
+  }));
+
   const outline = {
     title: post.title,
     slug: post.slug,
@@ -44,7 +54,7 @@ export async function POST(request: NextRequest) {
     metaDescription: post.excerpt ?? "",
     primaryKeyword: keywords[0] ?? post.title,
     secondaryKeywords: keywords.slice(1),
-    sections: [],
+    sections: mappedSections,
   };
 
   const result = await streamBlogPost(outline, {
@@ -53,6 +63,7 @@ export async function POST(request: NextRequest) {
     tone,
     wordCount: 900 as 600 | 900 | 1200,
     siteUrl: post.site.url,
+    companyInfo: post.site.companyInfo,
   });
 
   return result.toTextStreamResponse();

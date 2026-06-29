@@ -90,6 +90,25 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  # ── GSC Sync Worker ───────────────────────────────────────────────────────────
+  worker-gsc:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: growthpilot_worker_gsc
+    command: ["tsx", "src/workers/gsc-sync-worker.ts"]
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/growthpilot
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:

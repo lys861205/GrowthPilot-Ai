@@ -79,7 +79,8 @@ function parseJson<T>(raw: string, schema: z.ZodType<T>): T {
 
 export async function analyzeTrends(
   siteUrl: string,
-  snapshots: AuditSnapshot[]
+  snapshots: AuditSnapshot[],
+  gscMetrics: Array<{ date: string; clicks: number; impressions: number }> = []
 ): Promise<TrendAnalysis> {
   if (snapshots.length === 0) {
     throw new Error("No audit snapshots to analyze");
@@ -104,11 +105,17 @@ export async function analyzeTrends(
     })
     .join("\n\n");
 
+  const gscSummary = gscMetrics.length > 0 
+    ? `\n\nRecent Google Search Console Traffic (Last ${gscMetrics.length} days):\n` +
+      gscMetrics.map(m => `[${m.date}]: Clicks=${m.clicks}, Impressions=${m.impressions}`).join("\n") +
+      `\n\nPlease analyze if the SEO score changes correlate with actual traffic changes.`
+    : "";
+
   const prompt = `You are a senior SEO consultant analyzing audit history for ${siteUrl}.
 
 Here are ${sorted.length} SEO audits in chronological order:
 
-${auditSummaries}
+${auditSummaries}${gscSummary}
 
 Analyze the trends and return ONLY a JSON object (no markdown, no explanation) matching this exact structure:
 

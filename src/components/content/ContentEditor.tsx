@@ -5,6 +5,7 @@ import { useContentStream } from "@/hooks/useContentStream";
 import { saveBlogContentAction, updatePostStatusAction, deleteBlogPostAction } from "@/lib/content/actions";
 import { useRouter } from "next/navigation";
 import { Loader2, Sparkles, Save, Trash2, Eye } from "lucide-react";
+import MDEditor from "@uiw/react-md-editor";
 import { cn } from "@/lib/utils";
 import type { BlogPost } from "@/lib/db/schema";
 
@@ -127,17 +128,16 @@ export function ContentEditor({ post }: ContentEditorProps) {
       )}
 
       {/* Editor */}
-      <textarea
-        value={displayContent}
-        onChange={(e) => !isStreaming && setBody(e.target.value)}
-        readOnly={isStreaming}
-        placeholder={isStreaming ? "Writing…" : "Content will appear here. Click 'Generate Content' to start."}
-        className={cn(
-          "w-full rounded-xl border border-slate-200 p-4 text-sm text-slate-800 font-mono leading-relaxed resize-none focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400",
-          isStreaming && "bg-slate-50 cursor-wait"
-        )}
-        rows={30}
-      />
+      <div data-color-mode="light" className={cn("mt-4 rounded-xl overflow-hidden border", isStreaming ? "opacity-80 pointer-events-none" : "border-slate-200")}>
+        <MDEditor
+          value={displayContent}
+          onChange={(val) => !isStreaming && setBody(val || "")}
+          preview={isStreaming ? "preview" : "edit"}
+          height={600}
+          visibleDragbar={false}
+          className="!border-0"
+        />
+      </div>
     </div>
   );
 }

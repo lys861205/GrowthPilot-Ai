@@ -8,6 +8,7 @@ import {
   uuid,
   pgEnum,
   index,
+  real,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -126,6 +127,7 @@ export const sites = pgTable(
     name: text("name").notNull(),
     platform: platformEnum("platform").default("other"),
     faviconUrl: text("favicon_url"),
+    companyInfo: text("company_info"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -340,12 +342,59 @@ export const blogIdeas = pgTable(
   ]
 );
 
+// ─── Google Search Console ────────────────────────────────────────────────────
+
+export const gscAccounts = pgTable("gsc_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  googleAccountId: text("google_account_id"),
+  email: text("email"),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const gscProperties = pgTable("gsc_properties", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  siteId: uuid("site_id")
+    .notNull()
+    .references(() => sites.id, { onDelete: "cascade" }),
+  gscAccountId: uuid("gsc_account_id")
+    .notNull()
+    .references(() => gscAccounts.id, { onDelete: "cascade" }),
+  propertyUrl: text("property_url").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const gscDailyMetrics = pgTable("gsc_daily_metrics", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  propertyId: uuid("property_id")
+    .notNull()
+    .references(() => gscProperties.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(),
+  query: text("query"),
+  page: text("page"),
+  clicks: integer("clicks").notNull().default(0),
+  impressions: integer("impressions").notNull().default(0),
+  ctr: real("ctr"),
+  position: real("position"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [
+  index("gsc_metrics_property_id_idx").on(t.propertyId),
+  index("gsc_metrics_date_idx").on(t.date),
+]);
+
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
   accounts: many(accounts),
   sites: many(sites),
+  gscAccounts: many(gscAccounts),
 }));
 
 export const sitesRelations = relations(sites, ({ one, many }) => ({
@@ -356,6 +405,7 @@ export const sitesRelations = relations(sites, ({ one, many }) => ({
   memories: many(memories),
   blogIdeas: many(blogIdeas),
   blogAgentJobs: many(blogAgentJobs),
+  gscProperties: many(gscProperties),
 }));
 
 export const auditsRelations = relations(audits, ({ one, many }) => ({
@@ -411,6 +461,21 @@ export const blogIdeasRelations = relations(blogIdeas, ({ one }) => ({
   site: one(sites, { fields: [blogIdeas.siteId], references: [sites.id] }),
   audit: one(audits, { fields: [blogIdeas.auditId], references: [audits.id] }),
   convertedPost: one(blogPosts, { fields: [blogIdeas.convertedToPostId], references: [blogPosts.id] }),
+}));
+
+export const gscAccountsRelations = relations(gscAccounts, ({ one, many }) => ({
+  user: one(users, { fields: [gscAccounts.userId], references: [users.id] }),
+  properties: many(gscProperties),
+}));
+
+export const gscPropertiesRelations = relations(gscProperties, ({ one, many }) => ({
+  site: one(sites, { fields: [gscProperties.siteId], references: [sites.id] }),
+  account: one(gscAccounts, { fields: [gscProperties.gscAccountId], references: [gscAccounts.id] }),
+  metrics: many(gscDailyMetrics),
+}));
+
+export const gscDailyMetricsRelations = relations(gscDailyMetrics, ({ one }) => ({
+  property: one(gscProperties, { fields: [gscDailyMetrics.propertyId], references: [gscProperties.id] }),
 }));
 
 // ─── JSON column types ────────────────────────────────────────────────────────
@@ -486,3 +551,12 @@ export type NewBlogAgentJob = typeof blogAgentJobs.$inferInsert;
 export type BlogIdea = typeof blogIdeas.$inferSelect;
 export type NewBlogIdea = typeof blogIdeas.$inferInsert;
 export type NewMemory = typeof memories.$inferInsert;
+
+export type GscAccount = typeof gscAccounts.$inferSelect;
+export type NewGscAccount = typeof gscAccounts.$inferInsert;
+
+export type GscProperty = typeof gscProperties.$inferSelect;
+export type NewGscProperty = typeof gscProperties.$inferInsert;
+
+export type GscDailyMetric = typeof gscDailyMetrics.$inferSelect;
+export type NewGscDailyMetric = typeof gscDailyMetrics.$inferInsert;

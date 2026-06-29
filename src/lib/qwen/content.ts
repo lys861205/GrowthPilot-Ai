@@ -10,6 +10,7 @@ export interface BlogPostRequest {
   wordCount: 600 | 900 | 1200;
   siteUrl: string;
   siteName?: string;
+  companyInfo?: string | null;
 }
 
 export interface BlogPostMeta {
@@ -41,13 +42,17 @@ export type BlogOutline = z.infer<typeof outlineSchema>;
 export async function generateBlogOutline(
   req: BlogPostRequest
 ): Promise<BlogOutline> {
+  const companyInfoContext = req.companyInfo
+    ? `\nCompany Info: ${req.companyInfo}`
+    : "";
+
   const { text } = await generateText({
     model: qwen(QWEN_MODEL),
     prompt: `You are an expert SEO content strategist for e-commerce websites.
 
 Create a detailed blog post outline for the following request:
 
-Site: ${req.siteUrl}${req.siteName ? ` (${req.siteName})` : ""}
+Site: ${req.siteUrl}${req.siteName ? ` (${req.siteName})` : ""}${companyInfoContext}
 Topic: ${req.topic}
 Target keywords: ${req.keywords.length > 0 ? req.keywords.join(", ") : "derive from topic"}
 Tone: ${req.tone}
@@ -87,6 +92,10 @@ export async function streamBlogPost(
     )
     .join("\n\n");
 
+  const companyInfoContext = req.companyInfo
+    ? `\nCompany Information (inject these facts organically to build EEAT):\n${req.companyInfo}\n`
+    : "";
+
   return streamText({
     model: qwen(QWEN_MODEL),
     prompt: `You are an expert e-commerce content writer. Write a complete, SEO-optimised blog post based on this outline.
@@ -96,7 +105,7 @@ Primary keyword: "${outline.primaryKeyword}"
 Secondary keywords: ${outline.secondaryKeywords.join(", ")}
 Tone: ${req.tone}
 Target length: ~${req.wordCount} words
-Site: ${req.siteUrl}
+Site: ${req.siteUrl}${companyInfoContext}
 
 Outline:
 ${sectionsPrompt}
