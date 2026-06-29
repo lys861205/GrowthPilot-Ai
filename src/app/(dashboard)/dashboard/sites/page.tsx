@@ -2,8 +2,9 @@ import { requireSession } from "@/lib/auth/session";
 import { getSitesByUserId } from "@/lib/db/queries";
 import { AddSiteForm } from "@/components/dashboard/AddSiteForm";
 import { DeleteSiteButton } from "@/components/dashboard/DeleteSiteButton";
-import { Globe, ArrowRight, Clock } from "lucide-react";
+import { Globe, ArrowRight, Clock, Trophy } from "lucide-react";
 import Link from "next/link";
+import { InjectDemoButton } from "./InjectDemoButton";
 
 export default async function SitesPage() {
   const session = await requireSession();
@@ -19,9 +20,25 @@ export default async function SitesPage() {
       <AddSiteForm />
 
       {siteList.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-slate-200 py-16 text-center">
-          <Globe className="mx-auto h-8 w-8 text-slate-300" />
-          <p className="mt-3 text-sm text-slate-400">No sites added yet. Add your first site above.</p>
+        <div className="rounded-xl border-2 border-dashed border-slate-200 py-16 text-center bg-slate-50/50 flex flex-col items-center justify-center">
+          <div className="rounded-full bg-slate-100 p-4 mb-4">
+            <Globe className="h-8 w-8 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900">No sites added yet</h3>
+          <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
+            Add your first site above to start tracking SEO performance.
+          </p>
+          
+          <div className="mt-8 pt-8 border-t border-slate-200 w-full max-w-md mx-auto">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Trophy className="h-5 w-5 text-amber-500" />
+              <span className="text-sm font-medium text-slate-700">Hackathon Judge?</span>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">
+              Skip the wait and populate the dashboard with realistic dummy data instantly.
+            </p>
+            <InjectDemoButton />
+          </div>
         </div>
       ) : (
         <ul className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white shadow-sm">

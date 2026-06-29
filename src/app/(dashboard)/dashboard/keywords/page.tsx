@@ -47,26 +47,59 @@ export default async function KeywordsPage() {
      );
   }
 
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Keywords Performance</h1>
+          <p className="mt-1 text-slate-500">Real ranking data from Google Search Console</p>
+        </div>
+        <SyncButton accountId={account.id} />
+      </div>
+
+      <div className="grid gap-6">
+        {properties.map(property => (
+          <PropertyKeywordsCard key={property.id} property={property} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 async function PropertyKeywordsCard({ property }: { property: typeof gscProperties.$inferSelect }) {
   const [topMetrics, strikingMetrics] = await Promise.all([
     db
-      .select()
+      .select({
+        query: gscDailyMetrics.query,
+        clicks: sql<number>`SUM(${gscDailyMetrics.clicks})`,
+        impressions: sql<number>`SUM(${gscDailyMetrics.impressions})`,
+        ctr: sql<number>`SUM(${gscDailyMetrics.clicks})::float / NULLIF(SUM(${gscDailyMetrics.impressions}), 0)`,
+        position: sql<number>`AVG(${gscDailyMetrics.position})`,
+      })
       .from(gscDailyMetrics)
       .where(eq(gscDailyMetrics.propertyId, property.id))
-      .orderBy(desc(gscDailyMetrics.clicks))
+      .groupBy(gscDailyMetrics.query)
+      .orderBy(desc(sql`SUM(${gscDailyMetrics.clicks})`))
       .limit(20),
     db
-      .select()
+      .select({
+        query: gscDailyMetrics.query,
+        clicks: sql<number>`SUM(${gscDailyMetrics.clicks})`,
+        impressions: sql<number>`SUM(${gscDailyMetrics.impressions})`,
+        ctr: sql<number>`SUM(${gscDailyMetrics.clicks})::float / NULLIF(SUM(${gscDailyMetrics.impressions}), 0)`,
+        position: sql<number>`AVG(${gscDailyMetrics.position})`,
+      })
       .from(gscDailyMetrics)
-      .where(
+      .where(eq(gscDailyMetrics.propertyId, property.id))
+      .groupBy(gscDailyMetrics.query)
+      .having(
         and(
-          eq(gscDailyMetrics.propertyId, property.id),
-          sql`${gscDailyMetrics.impressions} > 0`, // Lowered for testing (normally > 1000)
-          sql`${gscDailyMetrics.position} > 10`,   // Lowered for testing (normally 11-40)
-          sql`${gscDailyMetrics.ctr} < 0.05`       // Lowered for testing
+          sql`SUM(${gscDailyMetrics.impressions}) > 0`,
+          sql`AVG(${gscDailyMetrics.position}) > 10`,
+          sql`SUM(${gscDailyMetrics.clicks})::float / NULLIF(SUM(${gscDailyMetrics.impressions}), 0) < 0.05`
         )
       )
-      .orderBy(desc(gscDailyMetrics.impressions))
+      .orderBy(desc(sql`SUM(${gscDailyMetrics.impressions})`))
       .limit(10)
   ]);
 
@@ -96,10 +129,10 @@ async function PropertyKeywordsCard({ property }: { property: typeof gscProperti
               </TableHeader>
               <TableBody>
                 {strikingMetrics.map((m) => (
-                  <TableRow key={m.id} className="hover:bg-indigo-50/50">
+                  <TableRow key={m.query} className="hover:bg-indigo-50/50">
                     <TableCell className="font-medium text-indigo-900">{m.query}</TableCell>
                     <TableCell className="text-right text-slate-600">{m.impressions}</TableCell>
-                    <TableCell className="text-right text-slate-600">{m.position?.toFixed(1)}</TableCell>
+                    <TableCell className="text-right text-slate-600">{m.position ? Number(m.position).toFixed(1) : "-"}</TableCell>
                     <TableCell className="text-right">
                       <Link
                         href={`/dashboard/content?keyword=${encodeURIComponent(m.query ?? "")}&siteId=${property.siteId}`}
@@ -136,15 +169,15 @@ async function PropertyKeywordsCard({ property }: { property: typeof gscProperti
               </TableHeader>
               <TableBody>
                 {topMetrics.map((m) => (
-                  <TableRow key={m.id}>
+                  <TableRow key={m.query}>
                     <TableCell className="font-medium">{m.query}</TableCell>
                     <TableCell className="text-right">{m.clicks}</TableCell>
                     <TableCell className="text-right">{m.impressions}</TableCell>
                     <TableCell className="text-right">
-                      {m.ctr ? (m.ctr * 100).toFixed(2) + "%" : "-"}
+                      {m.ctr ? (Number(m.ctr) * 100).toFixed(2) + "%" : "-"}
                     </TableCell>
                     <TableCell className="text-right">
-                      {m.position ? m.position.toFixed(1) : "-"}
+                      {m.position ? Number(m.position).toFixed(1) : "-"}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -157,25 +190,6 @@ async function PropertyKeywordsCard({ property }: { property: typeof gscProperti
           )}
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Keywords Performance</h1>
-          <p className="mt-1 text-slate-500">Real ranking data from Google Search Console</p>
-        </div>
-        <SyncButton accountId={account.id} />
-      </div>
-
-      <div className="grid gap-6">
-        {properties.map(property => (
-          <PropertyKeywordsCard key={property.id} property={property} />
-        ))}
-      </div>
     </div>
   );
 }
