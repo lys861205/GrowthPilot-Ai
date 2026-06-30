@@ -291,13 +291,13 @@ export async function runBlogAgent(input: BlogAgentInput): Promise<BlogAgentResu
   // Call 2: generate all 10 ideas with outlines (one call for efficiency)
   const { ideas: rawIdeas } = await generateBlogIdeas(input, context);
 
-  // Call 3: generate FAQs for top-5 priority ideas in parallel
+  // Call 3: generate FAQs for top-3 priority ideas in parallel
   const topIdeas = [...rawIdeas]
     .sort((a, b) => {
       const rank = { high: 0, medium: 1, low: 2 };
       return rank[a.priority] - rank[b.priority];
     })
-    .slice(0, 5);
+    .slice(0, 3);
 
   const faqResults = await Promise.all(
     topIdeas.map((idea) => generateFaqs(idea, context).catch(() => [] as BlogFaqItem[]))
