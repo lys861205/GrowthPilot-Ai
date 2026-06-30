@@ -13,6 +13,7 @@ export async function pushScoreHistory(
   await redis
     .multi()
     .zadd(key, ts, JSON.stringify(point))
+    .zremrangebyrank(key, 0, -51) // keep newest 50 entries
     .expire(key, TTL.SCORE_HISTORY)
     .exec();
 }

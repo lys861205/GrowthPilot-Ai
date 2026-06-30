@@ -17,6 +17,7 @@ import {
   buildTopIssuesFromPages,
   buildScoreBreakdownFromPages,
 } from "@/lib/redis/memory";
+import { getUserContext } from "@/lib/redis/memory/context";
 import { db as _db2 } from "@/lib/db";
 import { growthRecommendations as growthRecsTable } from "@/lib/db/schema";
 import { eq as _eq2 } from "drizzle-orm";
@@ -84,7 +85,10 @@ async function processAudit(
 
     await emit("suggestions", "Generating AI suggestions…");
 
-    // ── AI Suggestions ────────────────────────────────────────────────────
+    // ── Load site memory to inform AI suggestions ─────────────────────────
+    const siteMemory = await getUserContext(job.data.userId, siteId).catch(() => null);
+
+    // ── AI Suggestions (memory-aware) ─────────────────────────────────────
     const pageSuggestions = await generateSuggestions(
       pageResults.map((r, i) => ({
         pageId: insertedPages[i].id,
@@ -94,7 +98,8 @@ async function processAudit(
         title: crawledPages[i].title,
         metaDescription: crawledPages[i].metaDescription,
       })),
-      auditId
+      auditId,
+      siteMemory
     );
 
     if (pageSuggestions.length > 0) {

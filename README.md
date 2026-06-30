@@ -86,7 +86,7 @@ GrowthPilot AI deploys three autonomous agents that work continuously:
 
 - **Real-time Audit Streaming** — Watch your site being crawled live via SSE
 - **AI-Powered Suggestions** — Qwen generates specific, actionable fixes for every SEO issue
-- **Memory Layer** — Redis persists audit history per site; track score trends across multiple audits
+- **Memory-Driven AI** — After the first audit, every subsequent Qwen call is informed by the site's full history: total audits run, best/worst scores, average score change, and the most persistent unresolved issue — so suggestions never repeat and always focus on what actually matters
 - **Striking Distance Keywords** — Automatically flags page 2–4 keywords with high impressions but low CTR
 - **Blog Agent** — Autonomous background agent generates keyword-targeted blog outlines, FAQs, and meta tags
 - **EEAT Content Injection** — Company context (expertise, authority, trust signals) is injected into every content prompt
@@ -101,7 +101,7 @@ GrowthPilot AI deploys three autonomous agents that work continuously:
 |-------|-----------|
 | Frontend | Next.js 16, React 19, Tailwind CSS v4, shadcn/ui |
 | Backend | Next.js API Routes, Server Actions |
-| AI | Qwen (qwen-plus via DashScope / Alibaba Cloud) |
+| AI | Qwen (qwen3-plus via DashScope / Alibaba Cloud) |
 | Database | PostgreSQL via Neon + Drizzle ORM |
 | Queue | BullMQ + Redis (ioredis) |
 | Memory | Redis (per-site audit history + AI context) |
@@ -174,7 +174,7 @@ The production stack runs as a single Docker container managed by `supervisord`,
 
 Every AI capability in GrowthPilot is backed by Qwen via the DashScope OpenAI-compatible API:
 
-1. **SEO Suggestions** — After crawling, Qwen analyzes page issues and writes prioritized, specific recommendations
+1. **Memory-Aware SEO Suggestions** — After crawling, Qwen receives the site's full audit history (past scores, persistent issues, average improvement rate) alongside current page issues, so each audit produces suggestions that build on previous ones rather than repeating them
 2. **Action Plan** — Qwen synthesizes all audit findings into a structured 30-day action plan
 3. **Blog Outlines** — Qwen generates full H2/H3 outlines, FAQ sections, and meta descriptions targeted to keyword gaps
 4. **Trend Analysis** — Qwen interprets historical score data to surface growth insights
