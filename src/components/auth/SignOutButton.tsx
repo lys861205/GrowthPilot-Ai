@@ -9,8 +9,11 @@ export function SignOutButton() {
   const router = useRouter();
 
   async function handleSignOut() {
-    await signOut();
-    window.location.href = "/login";
+    try {
+      await signOut();
+    } finally {
+      window.location.href = "/login";
+    }
   }
 
   return (
@@ -18,7 +21,7 @@ export function SignOutButton() {
       variant="ghost"
       size="sm"
       onClick={handleSignOut}
-      className="text-slate-400 hover:text-white hover:bg-white/10 gap-2"
+      className="w-full justify-start text-slate-500 hover:text-slate-900 hover:bg-slate-100 gap-2"
     >
       <LogOut className="h-4 w-4" />
       Sign out
