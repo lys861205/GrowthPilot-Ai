@@ -91,6 +91,7 @@ GrowthPilot AI deploys three autonomous agents that work continuously:
 - **Blog Agent** — Autonomous background agent generates keyword-targeted blog outlines, FAQs, and meta tags
 - **EEAT Content Injection** — Company context (expertise, authority, trust signals) is injected into every content prompt
 - **Audit Comparison** — Compare any two audits side-by-side to measure improvement
+- **Google Search Console Integration** — OAuth 2.0 connection syncs daily keyword metrics (impressions, clicks, CTR, position) via a dedicated background worker; data is stored per-site and used by Qwen to surface content opportunities
 
 ---
 
