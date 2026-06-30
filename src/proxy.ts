@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const PUBLIC_PATHS = ["/login", "/register", "/api/auth", "/privacy", "/terms"];
 const PUBLIC_EXACT = ["/"]; // exact-match only (startsWith "/" would match everything)
 
-export function middleware(request: NextRequest) {
+export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isPublic =
