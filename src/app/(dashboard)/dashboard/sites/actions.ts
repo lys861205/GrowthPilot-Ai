@@ -192,7 +192,12 @@ export async function injectDemoDataAction() {
     issuesFound: 12,
     completedAt,
     topIssues,
-    scoreBreakdown: { "90-100": 0, "70-89": 1, "50-69": 0, "0-49": 1 },
+    scoreBreakdown: [
+      { category: "90-100", score: 0, issueCount: 0 },
+      { category: "70-89", score: 72, issueCount: 1 },
+      { category: "50-69", score: 0, issueCount: 0 },
+      { category: "0-49", score: 28, issueCount: 3 }
+    ],
   });
 
   await refreshUserContext(userId, site.id, audit.id, 62, "missing_title");
