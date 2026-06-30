@@ -167,7 +167,11 @@ export async function injectDemoDataAction() {
   ]);
 
   // 9. Push to Redis Memory
-  const topIssues = ["missing_title", "missing_h1", "meta_length"];
+  const topIssues = [
+    { type: "missing_title", label: "Missing Title Tag", count: 1, severity: "high" },
+    { type: "missing_h1", label: "Missing H1 Heading", count: 1, severity: "high" },
+    { type: "meta_length", label: "Meta Description Too Short", count: 1, severity: "medium" }
+  ];
   const completedAt = audit.completedAt!.toISOString();
   
   await pushScoreHistory(site.id, {
