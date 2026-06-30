@@ -18,6 +18,7 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET!,
   baseURL: process.env.BETTER_AUTH_URL!,
   trustHost: true,
+  trustedOrigins: ["http://localhost:3000", "http://growthpilot-ai.top", "http://127.0.0.1:3000", "http://43.106.13.221"],
 
   emailAndPassword: {
     enabled: true,
