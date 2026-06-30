@@ -118,8 +118,8 @@ GrowthPilot AI deploys three autonomous agents that work continuously:
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/your-username/growthpilot.git
-cd growthpilot
+git clone https://github.com/lys861205/GrowthPilot-Ai.git
+cd GrowthPilot-Ai
 npm install --legacy-peer-deps
 ```
 
